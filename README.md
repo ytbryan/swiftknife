@@ -1,12 +1,12 @@
 #swiftknife
-swiftknife is a small swift class for writing lesser code.
+swiftknife is a small swift class for writing lesser code for swift project.
 
 #### how to install
 ```
-//install swiftknife command line tool
+//copy the command line helper into /usr/bin
 sudo cp sk /usr/bin
 
-//at your xcode root directory
+//execute at root directory
 sk install
 ```
 

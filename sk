@@ -1,35 +1,30 @@
 #!/usr/bin/env ruby
+require 'commander/import'
 require 'digest/md5'
 require 'rubygems'
 require 'xcodeproj'
 require 'highline'
 require 'fileutils'
-require 'commander/import'
 require 'erb'
 require 'tilt'
 require 'yaml'
+require 'curb'
 
-program :version, '0.0.1'
+program :version, '0.1.1'
 program :description, 'swiftknife is a small swift class to write lesser code'
 
 command :add do |c|
-  c.syntax = 'swiftknife add [options]'
+  c.syntax = 'sk add [options]'
   c.summary = ''
   c.description = ''
   c.example 'description', 'command example'
   c.option '--some-switch', 'Some switch that does something'
   c.action do |args, options|
-
-    #create a reference
     proj = Xcodeproj::Project.open("swipe.xcodeproj")
-    # proj.new_group("plugins")
     proj["swipe"].new_file("#{input}.swift")
     proj.save
-    #create the file
     FileUtils.touch("swipe/#{input}.swift")
-
-    exit() unless args.count != 0
-
+    exit unless args.count != 0
     template = Tilt.new('UITableViewController.swift.erb')
     data = template.render(self, :class_name=> args.first,
                                  :project_name=>"swipe",
@@ -37,14 +32,13 @@ command :add do |c|
                                  :date=>"07/10/1085",
                                  :year => "1985",
                                  :organisation=>"TADA")
-    FileUtils.touch("")
+    # FileUtils.touch("")
     File.write("", "w") { |file| file.write(data)}
-
   end
 end
 
 command :uninstall do |c|
-  c.syntax = 'swiftknife remove [options]'
+  c.syntax = 'sk uninstall [options]'
   c.summary = ''
   c.description = ''
   c.example 'description', 'command example'
@@ -52,7 +46,7 @@ command :uninstall do |c|
   c.action do |args, options|
     input = ask "Are you sure you want to uninstall swiftknife? (Y/n)"
     if input == "Y"
-      status = system("rm -rf plugins/swiftknife.swift")
+      status = FileUtils.rm_rf("plugins/swiftknife.swift", :secure=>true)
       puts "swiftknife uninstalled" unless status == true
       puts "uninstallation failed" unless status == false
     elsif input == "n"
@@ -61,12 +55,22 @@ command :uninstall do |c|
   end
 end
 
-command :install do |c|
-  c.syntax = 'swiftknife add [options]'
+command :compile do |c|
+  c.syntax = 'sk compile [options]'
   c.summary = ''
   c.description = ''
   c.example 'description', 'command example'
-  c.option '--some-switch', 'Some switch that does something'
+  c.option '--some', ''
+  c.action do |args, options|
+    compile_swiftknife()
+  end
+end
+
+command :install do |c|
+  c.syntax = 'sk install'
+  c.summary = 'install swiftknife.swift to xcode project'
+  c.description = ''
+  c.example 'description', 'command example'
   c.action do |args, options|
     array = find_xcodeproj()
     if array.count > 1
@@ -77,8 +81,7 @@ command :install do |c|
       input = ask "Which xcodeproj do you wish to install swiftknife on: #{str}"
       add_swiftknife(array, "#{input}".to_i)
     elsif array.count == 0
-      puts "No xcodeproj found."
-      exit
+      puts "No xcodeproj found." and exit
     elsif array.count == 1
       add_swiftknife(array, 0)
     end
@@ -90,14 +93,11 @@ private
 def askProjectDetails
   puts "These will be attached to the signature on top of each files"
   input = ask "What's the author's name?"
-  puts "ok: #{input}"
+  # puts "ok: #{input}"
   input2 = ask "What's the organisation's name?"
-  puts "ok: #{input2}"
-
-
+  # puts "ok: #{input2}"
   # FileUtils.touch(".swiftknife/data.yml")
   # FileUtils.touch(".swiftknife/templates")
-
   # File.open('data.yml', 'w') { |file| file.write("") }
   data = YAML::load_file('data.yml') #Load
   data['project']['author'] = "#{input}" #Modify
@@ -107,13 +107,15 @@ end
 
 # USAGE: md5(args.join(" "))
 def md5(value)
-  val = Digest::MD5.hexdigest(value).to_s.insert(8, "-").insert(13, "-").insert(18, "-").insert(23, "-")
-  return val
+  return Digest::MD5.hexdigest(value).to_s.insert(8, "-").insert(13, "-").insert(18, "-").insert(23, "-")
+end
+
+def get_src
+  return Dir.glob('src/*.swift')
 end
 
 def find_xcodeproj
-  xcodeproj_file_arr = Dir.glob('*.xcodeproj')
-  return xcodeproj_file_arr
+  return Dir.glob('*.xcodeproj')
 end
 
 def add_swiftknife(array, index)
@@ -124,6 +126,17 @@ def add_swiftknife(array, index)
     proj.save
     #download swiftknife.swift, move it in
     FileUtils.mkdir("plugins") unless Dir.exists?("plugins")
-    swiftknife_url = "https://raw.githubusercontent.com/ytbryan/swiftknife/master/swiftknife.swift"
+    swiftknife_url = "https://raw.githubusercontent.com/ytbryan/swiftknife/master/bin/swiftknife.swift"
     system("curl -o plugins/swiftknife.swift #{swiftknife_url}")
+end
+
+
+def compile_swiftknife
+  array = get_src()
+  exit unless array.count > 0
+  str = "\n"
+  array.count.times do |index|
+    str = str + "\n" + File.read("#{array[index]}")
+  end
+  File.open('bin/swiftknife.swift', 'w') {|f| f.write(str) }
 end

@@ -1,0 +1,157 @@
+#!/usr/bin/env ruby
+require 'digest/md5'
+require 'rubygems'
+require 'xcodeproj'
+require 'highline'
+require 'fileutils'
+require 'commander/import'
+require 'erb'
+require 'tilt'
+require 'yaml'
+
+program :version, '0.0.1'
+program :description, 'swiftknife is a small command line tool to add swift files to xcodeproj'
+
+command :add do |c|
+  c.syntax = 'swiftknife add [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+
+    input = ask "What's the name of the file?"
+    #create a reference
+    proj = Xcodeproj::Project.open("swipe.xcodeproj")
+    # proj.new_group("plugins")
+    proj["swipe"].new_file("#{input}.swift")
+    proj.save
+    #create the file
+    FileUtils.touch("swipe/#{input}.swift")
+
+  end
+end
+
+command :set do |c|
+
+  c.syntax = 'swiftknife set [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+
+  end
+end
+
+command :remove do |c|
+  c.syntax = 'swiftknife remove [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    puts "remove swiftknife"
+
+  end
+end
+
+command :uninstall do |c|
+  c.syntax = 'swiftknife remove [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    input = ask "Are you sure you want to uninstall swiftknife? (Y/n)"
+    if input == "Y"
+      status = system("rm -rf plugins/swiftknife.swift")
+      puts "swiftknife uninstalled" unless status == true
+      puts "uninstallation failed" unless status == false
+    elsif input == "n"
+      puts "Cancelled."
+    end
+  end
+end
+
+command :tableview do |c|
+  c.syntax = 'swiftknife remove [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+
+    exit() unless args.count != 0
+
+    template = Tilt.new('UITableViewController.swift.erb')
+    data = template.render(self, :class_name=> args.first,
+                                 :project_name=>"swipe",
+                                 :author=>"Bryan Lim",
+                                 :date=>"07/10/1085",
+                                 :year => "1985",
+                                 :organisation=>"TADA")
+    FileUtils.touch("")
+    File.write("", "w") { |file| file.write(data)}
+  end
+end
+
+command :install do |c|
+  c.syntax = 'swiftknife add [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+
+    puts "installing swiftknife..."
+
+    #create the reference
+    proj = Xcodeproj::Project.open("swipe.xcodeproj")
+    proj.new_group("plugins")
+    proj["plugins"].new_file("plugins/swiftknife.swift")
+    proj.save
+
+    #download swiftknife.swift, move it in
+    swiftknife_url = "https://github.com/ytbryan/swiftknife/blob/master/swiftknife.swift"
+    system("curl -o plugins/swiftknife.swift #{swiftknife_url}")
+
+  end
+end
+
+command :md5 do |c|
+  c.syntax = 'swiftknife add [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    puts md5(args.join(" "))
+  end
+end
+
+private
+
+def askProjectDetails
+  puts "These will be attached to the signature on top of each files"
+  input = ask "What's the author's name?"
+  puts "ok: #{input}"
+  input2 = ask "What's the organisation's name?"
+  puts "ok: #{input2}"
+
+
+  # FileUtils.touch(".swiftknife/data.yml")
+  # FileUtils.touch(".swiftknife/templates")
+
+  # File.open('data.yml', 'w') { |file| file.write("") }
+  data = YAML::load_file('data.yml') #Load
+  data['project']['author'] = "#{input}" #Modify
+  data['project']['organization'] = "#{input2}" #Modify
+  File.open('data.yml', 'w') {|f| f.write data.to_yaml } #Store
+end
+
+
+def md5(value)
+  val = Digest::MD5.hexdigest(value).to_s.insert(8, "-").insert(13, "-").insert(18, "-").insert(23, "-")
+  return val
+end

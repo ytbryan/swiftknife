@@ -122,7 +122,10 @@ def add_swiftknife(array, index)
     puts "installing swiftknife..."
     proj = Xcodeproj::Project.open("#{array[index]}")
     proj.new_group("plugins")
-    proj["plugins"].new_file("plugins/swiftknife.swift")
+    file = proj["plugins"].new_file("plugins/swiftknife.swift")
+    #add to maintarget
+    main_target = proj.targets.first
+    main_target.add_file_references([file])
     proj.save
     #download swiftknife.swift, move it in
     FileUtils.mkdir("plugins") unless Dir.exists?("plugins")

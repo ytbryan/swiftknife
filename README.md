@@ -1,3 +1,5 @@
+![swiftknife](images/swiftknife.gif)
+
 #swiftknife
 swiftknife is a small swift class for writing lesser code for swift project.
 

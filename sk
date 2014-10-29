@@ -55,7 +55,7 @@ command :uninstall do |c|
   end
 end
 
-command :compile do |c|
+command :create do |c|
   c.syntax = 'sk compile [options]'
   c.summary = ''
   c.description = ''

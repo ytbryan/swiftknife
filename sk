@@ -56,11 +56,11 @@ command :uninstall do |c|
 end
 
 command :create do |c|
-  c.syntax = 'sk compile [options]'
-  c.summary = ''
-  c.description = ''
+  c.syntax = 'sk create [options]'
+  # c.summary = ''
+  # c.description = ''
   c.example 'description', 'command example'
-  c.option '--some', ''
+  # c.option '--some', ''
   c.action do |args, options|
     compile_swiftknife()
   end
@@ -142,4 +142,5 @@ def compile_swiftknife
     str = str + "\n" + File.read("#{array[index]}")
   end
   File.open('bin/swiftknife.swift', 'w') {|f| f.write(str) }
+  puts "done."
 end
